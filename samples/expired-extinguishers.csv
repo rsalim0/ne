@@ -1,0 +1,9 @@
+Serial,Location,Type,Size,Expiry,Status
+FE-0012,Building A - Floor 1 - Lobby,water,2.5 lbs,2024-06-01,expired
+FE-0004,Building C - Parking Level 1,water,2.5 lbs,2024-06-01,expired
+FE-0008,Building B - Server Room,water,2.5 lbs,2024-06-01,expired
+FE-0010,Building C - Parking Level 1,foam,9 lbs,2025-01-15,under_maintenance
+FE-0005,Building C - Workshop,co2,5 lbs,2025-01-15,under_maintenance
+FE-0006,Building A - Floor 1 - Lobby,foam,9 lbs,2026-01-15,active
+FE-0001,Building A - Floor 2 - Kitchen,co2,5 lbs,2026-01-15,active
+FE-0011,Building C - Workshop,dry_chemical,12 lbs,2026-01-15,active
