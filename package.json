@@ -14,18 +14,24 @@
     "db:seed": "tsx --env-file=.env.local scripts/seed.ts"
   },
   "dependencies": {
+    "@base-ui/react": "^1.5.0",
     "@phosphor-icons/react": "^2.1.10",
     "bcryptjs": "^3.0.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
     "jose": "^6.2.3",
+    "lucide-react": "^1.17.0",
     "next": "16.2.7",
     "nodemailer": "^8.0.10",
     "pdfkit": "^0.18.0",
     "pino": "^10.3.1",
     "postgres": "^3.4.9",
     "react": "19.2.4",
+    "react-day-picker": "^10.0.1",
     "react-dom": "19.2.4",
     "swr": "^2.4.1",
+    "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

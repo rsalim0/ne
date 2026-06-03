@@ -1,0 +1,56 @@
+flowchart TD
+    A([User visits app]) --> B{Has account?}
+
+    B -- No --> C["Register<br/>POST /api/auth/register"]
+    C --> D[(users INSERT)]
+    D --> E["Auto-login<br/>session created"]
+
+    B -- Yes --> F["Login<br/>POST /api/auth/login"]
+    F --> G[(users SELECT by email)]
+    G --> H{bcrypt verify}
+    H -- Fail --> F
+    H -- Pass --> I[("sessions INSERT<br/>jti issued")]
+    I --> J[JWT returned to client]
+
+    J --> K{Role?}
+
+    K -- admin --> L["Manage Users<br/>GET/POST/PATCH/DELETE /api/users"]
+    L --> M[(users CRUD)]
+
+    K -- admin/inspector --> N["Register Extinguisher<br/>POST /api/extinguishers"]
+    N --> O[(fire_extinguishers INSERT)]
+
+    O --> P["Schedule Inspection<br/>POST /api/inspections"]
+    P --> Q[("inspections INSERT<br/>status=scheduled")]
+    Q --> R[("notifications INSERT<br/>to inspectors + admins")]
+
+    Q --> S["Inspector performs inspection<br/>PATCH /api/inspections/:id"]
+    S --> T[("inspections UPDATE<br/>status=completed")]
+    T --> U["Log Maintenance<br/>POST /api/maintenance"]
+    U --> V[("maintenance_records INSERT<br/>linked to extinguisher + optional inspection")]
+
+    K -- any --> W["View Dashboard<br/>GET /api/dashboard"]
+    W --> X[(fire_extinguishers aggregate)]
+    W --> Y[(inspections aggregate)]
+    W --> Z[(maintenance_records aggregate)]
+
+    K -- any --> AA["Generate Reports<br/>GET /api/reports"]
+    AA --> AB[(Stock report)]
+    AA --> AC[(Inspection report)]
+    AA --> AD[(Expired report)]
+    AA --> AE[(Maintenance report)]
+
+    subgraph PasswordReset [Password Reset Flow]
+        PR1([Forgot password]) --> PR2[POST /api/auth/forgot-password]
+        PR2 --> PR3[("password_resets INSERT<br/>SHA-256 token hash stored")]
+        PR3 --> PR4[Raw token emailed to user]
+        PR4 --> PR5["POST /api/auth/reset-password<br/>with raw token"]
+        PR5 --> PR6[("password_resets validate<br/>hash + expiry + unused")]
+        PR6 --> PR7[("password_resets UPDATE<br/>used_at = now")]
+        PR7 --> PR8[("users UPDATE<br/>new password_hash")]
+    end
+
+    subgraph Logout [Logout Flow]
+        LO1([User logs out]) --> LO2[POST /api/auth/logout]
+        LO2 --> LO3[("sessions UPDATE<br/>revoked_at = now")]
+    end

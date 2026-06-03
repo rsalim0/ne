@@ -1,0 +1,101 @@
+erDiagram
+    users {
+        uuid id PK
+        varchar first_name
+        varchar last_name
+        varchar email
+        text password_hash
+        user_role role
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    fire_extinguishers {
+        uuid id PK
+        varchar serial_number
+        varchar location
+        extinguisher_type type
+        extinguisher_size size
+        date installation_date
+        date expiry_date
+        extinguisher_status status
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    inspections {
+        uuid id PK
+        uuid extinguisher_id FK
+        date scheduled_date
+        time scheduled_time
+        uuid inspector_id FK
+        uuid requested_by FK
+        inspection_status status
+        text remarks
+        timestamp created_at
+    }
+
+    maintenance_records {
+        uuid id PK
+        uuid extinguisher_id FK
+        uuid inspector_id FK
+        uuid inspection_id FK
+        text actions_taken
+        date maintenance_date
+        text conditions_noted
+        timestamp created_at
+    }
+
+    sessions {
+        uuid id PK
+        uuid user_id FK
+        varchar jti
+        text user_agent
+        varchar ip
+        timestamp expires_at
+        timestamp revoked_at
+        timestamp created_at
+    }
+
+    password_resets {
+        uuid id PK
+        uuid user_id FK
+        varchar token_hash
+        timestamp expires_at
+        timestamp used_at
+        timestamp created_at
+    }
+
+    notifications {
+        uuid id PK
+        uuid user_id FK
+        varchar type
+        varchar title
+        text message
+        varchar entity_type
+        uuid entity_id
+        timestamp read_at
+        timestamp created_at
+    }
+
+    audit_logs {
+        uuid id PK
+        uuid actor_user_id FK
+        varchar action
+        varchar entity_type
+        varchar entity_id
+        jsonb metadata
+        varchar ip
+        timestamp created_at
+    }
+
+    fire_extinguishers ||--o{ inspections : "extinguisher_id"
+    users ||--o{ inspections : "inspector_id (optional)"
+    users ||--o{ inspections : "requested_by (optional)"
+    fire_extinguishers ||--o{ maintenance_records : "extinguisher_id"
+    users ||--o{ maintenance_records : "inspector_id (optional)"
+    inspections ||--o{ maintenance_records : "inspection_id (optional)"
+    users ||--o{ sessions : "user_id"
+    users ||--o{ password_resets : "user_id"
+    users ||--o{ notifications : "user_id"
+    users ||--o{ audit_logs : "actor_user_id (optional)"

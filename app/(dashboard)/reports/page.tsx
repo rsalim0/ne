@@ -5,9 +5,21 @@ import useSWR from 'swr'
 import { FilePdf, FileCsv } from '@phosphor-icons/react/dist/ssr'
 import { fetcher } from '@/lib/api-client'
 import { formatDate } from '@/lib/utils'
+
+// COSS primitives
+import { Button } from '@/components/ui/button'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import {
-  Card, CardContent, CardHeader, CardTitle, EmptyState, Select, Skeleton, TBody, Table, Td, Th,
-} from '@/components/ui'
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectPopup,
+  SelectItem,
+} from '@/components/ui/select'
+import { Field, FieldLabel } from '@/components/ui/field'
+
+// Legacy primitives kept from ui.tsx (no COSS equivalent)
+import { EmptyState, Skeleton, TBody, Table, Td, Th } from '@/components/ui'
 
 type ReportData = {
   title: string
@@ -17,10 +29,21 @@ type ReportData = {
 }
 
 const REPORTS = [
-  { key: 'stock', label: 'Stock Report' },
-  { key: 'inspections', label: 'Inspection Report' },
-  { key: 'expired', label: 'Expired Extinguishers' },
-  { key: 'maintenance', label: 'Maintenance History' },
+  { value: 'stock', label: 'Stock Report' },
+  { value: 'inspections', label: 'Inspection Report' },
+  { value: 'expired', label: 'Expired Extinguishers' },
+  { value: 'maintenance', label: 'Maintenance History' },
+]
+
+const PERIODS = [
+  { value: 'daily', label: 'Daily' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'yearly', label: 'Yearly' },
+]
+
+const GROUP_BY = [
+  { value: 'extinguisher', label: 'Extinguisher' },
+  { value: 'inspector', label: 'Inspector' },
 ]
 
 const DATE_KEYS = new Set(['expiryDate', 'scheduledDate', 'last', 'maintenanceDate'])
@@ -45,53 +68,94 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-foreground">Reports</h1>
-        <p className="mt-1 text-sm text-muted">Compliance analytics with PDF and CSV export.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Compliance analytics with PDF and CSV export.</p>
       </div>
 
+      {/* ── Filter bar ─────────────────────────────────────────────────────── */}
       <Card>
-        <CardContent className="flex flex-wrap items-end gap-3">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted">Report</label>
-            <Select className="max-w-[220px]" value={type} onChange={(e) => setType(e.target.value)}>
-              {REPORTS.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
-            </Select>
-          </div>
-          {type === 'stock' && (
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted">Period</label>
-              <Select className="max-w-[150px]" value={period} onChange={(e) => setPeriod(e.target.value)}>
-                <option value="daily">Daily</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
+        <CardContent>
+          <div className="flex flex-wrap items-end gap-4">
+            {/* Report type */}
+            <Field>
+              <FieldLabel>Report</FieldLabel>
+              <Select
+                items={REPORTS}
+                value={type}
+                onValueChange={(v) => { if (v) setType(v) }}
+              >
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder="Select report" />
+                </SelectTrigger>
+                <SelectPopup>
+                  {REPORTS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  ))}
+                </SelectPopup>
               </Select>
+            </Field>
+
+            {/* Period — only for stock report */}
+            {type === 'stock' && (
+              <Field>
+                <FieldLabel>Period</FieldLabel>
+                <Select
+                  items={PERIODS}
+                  value={period}
+                  onValueChange={(v) => { if (v) setPeriod(v) }}
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectPopup>
+                    {PERIODS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectPopup>
+                </Select>
+              </Field>
+            )}
+
+            {/* Group by — only for maintenance report */}
+            {type === 'maintenance' && (
+              <Field>
+                <FieldLabel>Group by</FieldLabel>
+                <Select
+                  items={GROUP_BY}
+                  value={by}
+                  onValueChange={(v) => { if (v) setBy(v) }}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Group by" />
+                  </SelectTrigger>
+                  <SelectPopup>
+                    {GROUP_BY.map((g) => (
+                      <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
+                    ))}
+                  </SelectPopup>
+                </Select>
+              </Field>
+            )}
+
+            {/* Export buttons */}
+            <div className="ml-auto flex gap-2">
+              <Button type="button" variant="outline" render={<a href={dl('csv')} />}>
+                <FileCsv className="h-4 w-4" /> CSV
+              </Button>
+              <Button type="button" variant="outline" render={<a href={dl('pdf')} />}>
+                <FilePdf className="h-4 w-4" /> PDF
+              </Button>
             </div>
-          )}
-          {type === 'maintenance' && (
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted">Group by</label>
-              <Select className="max-w-[180px]" value={by} onChange={(e) => setBy(e.target.value)}>
-                <option value="extinguisher">Extinguisher</option>
-                <option value="inspector">Inspector</option>
-              </Select>
-            </div>
-          )}
-          <div className="ml-auto flex gap-2">
-            <a href={dl('csv')} className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground hover:bg-surface-2">
-              <FileCsv className="h-4 w-4" /> CSV
-            </a>
-            <a href={dl('pdf')} className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground hover:bg-surface-2">
-              <FilePdf className="h-4 w-4" /> PDF
-            </a>
           </div>
         </CardContent>
       </Card>
 
+      {/* ── Summary cards ──────────────────────────────────────────────────── */}
       {report?.summary && report.summary.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {report.summary.map((s) => (
             <Card key={s.label}>
               <CardContent>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted">{s.label}</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{s.label}</p>
                 <p className="mt-1 text-2xl font-semibold text-foreground">{s.value}</p>
               </CardContent>
             </Card>
@@ -99,13 +163,18 @@ export default function ReportsPage() {
         </div>
       )}
 
+      {/* ── Data table ─────────────────────────────────────────────────────── */}
       <Card>
         <CardHeader>
           <CardTitle>{report?.title ?? 'Report'}</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
           ) : !report || report.rows.length === 0 ? (
             <EmptyState title="No data for this report" />
           ) : (
@@ -117,7 +186,9 @@ export default function ReportsPage() {
                 {report.rows.map((row, i) => (
                   <tr key={i}>
                     {report.columns.map((c) => (
-                      <Td key={c.key}>{DATE_KEYS.has(c.key) ? formatDate(row[c.key] as string) : row[c.key] ?? '—'}</Td>
+                      <Td key={c.key}>
+                        {DATE_KEYS.has(c.key) ? formatDate(row[c.key] as string) : row[c.key] ?? '—'}
+                      </Td>
                     ))}
                   </tr>
                 ))}
