@@ -8,11 +8,13 @@ import { resetPasswordSchema } from '@/lib/validation/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Field, FieldLabel } from '@/components/ui/field'
+import { OtpCodeInput } from '@/components/ui/otp-code-input'
 
 type Errors = Record<string, string>
 
 export default function ResetPasswordPage() {
-  const [token, setToken] = useState('')
+  const [email, setEmail] = useState('')
+  const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [done, setDone] = useState(false)
@@ -20,16 +22,16 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Read ?token=... on the client to avoid a Suspense boundary requirement.
+  // Read ?email=... on the client to avoid a Suspense boundary requirement.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of the URL token on mount
-    setToken(new URLSearchParams(window.location.search).get('token') ?? '')
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of the URL param on mount
+    setEmail(new URLSearchParams(window.location.search).get('email') ?? '')
   }, [])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    const parsed = resetPasswordSchema.safeParse({ token, password })
+    const parsed = resetPasswordSchema.safeParse({ email, code, password })
     const errs: Errors = {}
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
@@ -45,7 +47,7 @@ export default function ResetPasswordPage() {
     setErrors({})
     setLoading(true)
     try {
-      await api.post('/api/v1/auth/reset-password', { token, password })
+      await api.post('/api/v1/auth/reset-password', { email, code, password })
       setDone(true)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Reset failed')
@@ -56,9 +58,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-        Set a new password
-      </h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground">Set a new password</h1>
 
       {done ? (
         <div className="mt-5 flex flex-col gap-4">
@@ -74,64 +74,82 @@ export default function ResetPasswordPage() {
           </Link>
         </div>
       ) : (
-        <form onSubmit={onSubmit} className="mt-5 flex flex-col gap-4" noValidate>
-          {error && (
-            <div
-              role="alert"
-              className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 text-sm text-destructive-foreground"
-            >
-              <WarningCircle weight="fill" className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-          <Field>
-            <FieldLabel htmlFor="token">Reset token</FieldLabel>
-            <Input
-              id="token"
-              required
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="Paste token from email"
-              aria-invalid={!!errors.token}
-            />
-            {errors.token && <p className="text-xs text-destructive-foreground">{errors.token}</p>}
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="password">New password</FieldLabel>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 8 characters"
-              aria-invalid={!!errors.password}
-            />
-            {errors.password && (
-              <p className="text-xs text-destructive-foreground">{errors.password}</p>
+        <>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Enter the 6-digit code we emailed you and choose a new password.
+          </p>
+          <form onSubmit={onSubmit} className="mt-5 flex flex-col gap-4" noValidate>
+            {error && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 text-sm text-destructive-foreground"
+              >
+                <WarningCircle weight="fill" className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
             )}
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="confirm">Confirm new password</FieldLabel>
-            <Input
-              id="confirm"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder="Re-enter password"
-              aria-invalid={!!errors.confirm}
-            />
-            {errors.confirm && (
-              <p className="text-xs text-destructive-foreground">{errors.confirm}</p>
-            )}
-          </Field>
-          <Button type="submit" size="lg" loading={loading} className="w-full">
-            Reset password
-          </Button>
-        </form>
+            <Field>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                aria-invalid={!!errors.email}
+              />
+              {errors.email && <p className="text-xs text-destructive-foreground">{errors.email}</p>}
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="code">Reset code</FieldLabel>
+              <OtpCodeInput id="code" value={code} onChange={setCode} error={!!errors.code} />
+              {errors.code && <p className="text-xs text-destructive-foreground">{errors.code}</p>}
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="password">New password</FieldLabel>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                aria-invalid={!!errors.password}
+              />
+              {errors.password && (
+                <p className="text-xs text-destructive-foreground">{errors.password}</p>
+              )}
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="confirm">Confirm new password</FieldLabel>
+              <Input
+                id="confirm"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="Re-enter password"
+                aria-invalid={!!errors.confirm}
+              />
+              {errors.confirm && (
+                <p className="text-xs text-destructive-foreground">{errors.confirm}</p>
+              )}
+            </Field>
+            <Button type="submit" size="lg" loading={loading} className="w-full">
+              Reset password
+            </Button>
+          </form>
+          <Link
+            href="/forgot-password"
+            className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+          >
+            Request a new code
+          </Link>
+        </>
       )}
     </div>
   )

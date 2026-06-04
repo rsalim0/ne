@@ -8,6 +8,7 @@ import {
   date,
   time,
   jsonb,
+  integer,
   index,
 } from 'drizzle-orm/pg-core'
 
@@ -45,6 +46,8 @@ export const inspectionStatusEnum = pgEnum('inspection_status', [
   'cancelled',
 ])
 
+export const otpPurposeEnum = pgEnum('otp_purpose', ['verify_email', 'password_reset'])
+
 /* ------------------------------------------------------------------ */
 /* Users (User Management Service)                                     */
 /* ------------------------------------------------------------------ */
@@ -58,6 +61,9 @@ export const users = pgTable(
     email: varchar('email', { length: 255 }).notNull().unique(),
     passwordHash: text('password_hash').notNull(),
     role: userRoleEnum('role').notNull().default('user'),
+    // Null until the account's email is confirmed via OTP. Login is blocked
+    // while this is null.
+    emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()
@@ -177,7 +183,29 @@ export const sessions = pgTable(
 )
 
 /* ------------------------------------------------------------------ */
-/* Password resets                                                     */
+/* Email OTPs (account confirmation + password reset codes)            */
+/* ------------------------------------------------------------------ */
+
+export const emailOtps = pgTable(
+  'email_otps',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    purpose: otpPurposeEnum('purpose').notNull(),
+    // SHA-256 of the 6-digit code; codes are short-lived and attempt-limited.
+    codeHash: varchar('code_hash', { length: 128 }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    attempts: integer('attempts').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('email_otps_user_purpose_idx').on(t.userId, t.purpose)]
+)
+
+/* ------------------------------------------------------------------ */
+/* Password resets (DEPRECATED — superseded by email_otps OTP codes)   */
 /* ------------------------------------------------------------------ */
 
 export const passwordResets = pgTable(
@@ -251,6 +279,8 @@ export type NewInspection = typeof inspections.$inferInsert
 export type MaintenanceRecord = typeof maintenanceRecords.$inferSelect
 export type NewMaintenanceRecord = typeof maintenanceRecords.$inferInsert
 export type Session = typeof sessions.$inferSelect
+export type EmailOtp = typeof emailOtps.$inferSelect
+export type OtpPurpose = (typeof otpPurposeEnum.enumValues)[number]
 export type Notification = typeof notifications.$inferSelect
 export type AuditLog = typeof auditLogs.$inferSelect
 

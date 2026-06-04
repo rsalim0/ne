@@ -123,10 +123,55 @@ export const openApiDocument = {
           },
         },
         responses: {
-          '201': { description: 'Created' },
+          '201': { description: 'Created; a 6-digit confirmation code is emailed. Account is unverified until confirmed.' },
           '400': { $ref: '#/components/responses/BadRequest' },
           '409': { $ref: '#/components/responses/Conflict' },
         },
+      },
+    },
+    '/api/v1/auth/verify-email': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Confirm an account with the emailed 6-digit code',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email', 'code'],
+                properties: {
+                  email: { type: 'string', format: 'email' },
+                  code: { type: 'string', example: '123456' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Verified; returns { user, token, expiresAt } and signs the user in' },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '429': { description: 'Too many incorrect attempts' },
+        },
+      },
+    },
+    '/api/v1/auth/resend-otp': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Resend the account confirmation code',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email'],
+                properties: { email: { type: 'string', format: 'email' } },
+              },
+            },
+          },
+        },
+        responses: { '200': { description: 'Generic acknowledgement' } },
       },
     },
     '/api/v1/auth/login': {
@@ -152,6 +197,7 @@ export const openApiDocument = {
           '200': { description: 'Authenticated; returns { user, token, expiresAt }' },
           '400': { $ref: '#/components/responses/BadRequest' },
           '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { description: 'EMAIL_NOT_VERIFIED — confirm the account first (a new code is emailed)' },
         },
       },
     },
@@ -180,7 +226,7 @@ export const openApiDocument = {
     '/api/v1/auth/forgot-password': {
       post: {
         tags: ['Auth'],
-        summary: 'Request a password reset token',
+        summary: 'Request a password reset code (emailed 6-digit OTP)',
         requestBody: {
           required: true,
           content: {
@@ -199,16 +245,17 @@ export const openApiDocument = {
     '/api/v1/auth/reset-password': {
       post: {
         tags: ['Auth'],
-        summary: 'Reset password using a token',
+        summary: 'Reset password using the emailed 6-digit code',
         requestBody: {
           required: true,
           content: {
             'application/json': {
               schema: {
                 type: 'object',
-                required: ['token', 'password'],
+                required: ['email', 'code', 'password'],
                 properties: {
-                  token: { type: 'string' },
+                  email: { type: 'string', format: 'email' },
+                  code: { type: 'string', example: '123456' },
                   password: { type: 'string', example: 'NewPassword123' },
                 },
               },
@@ -218,6 +265,7 @@ export const openApiDocument = {
         responses: {
           '200': { description: 'Password reset' },
           '400': { $ref: '#/components/responses/BadRequest' },
+          '429': { description: 'Too many incorrect attempts' },
         },
       },
     },

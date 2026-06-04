@@ -16,6 +16,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 import { api } from '@/lib/api-client'
 import { UserProvider, type CurrentUser } from '@/lib/user-context'
+import { NotificationBell } from '@/components/notification-bell'
 import { cn } from '@/lib/utils'
 import type { UserRole } from '@/lib/db/schema'
 
@@ -59,16 +60,19 @@ export function DashboardShell({ user, children }: { user: CurrentUser; children
         {/* Sidebar (desktop) */}
         <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-surface md:flex">
           {/* Brand */}
-          <div className="flex h-16 items-center gap-3 border-b border-border px-5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <FireExtinguisher weight="fill" className="h-4 w-4" />
-            </span>
-            <div>
-              <span className="block text-sm font-bold tracking-tight text-foreground">FEMS</span>
-              <span className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                Fire Safety
+          <div className="flex h-16 items-center justify-between gap-3 border-b border-border px-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <FireExtinguisher weight="fill" className="h-4 w-4" />
               </span>
+              <div>
+                <span className="block text-sm font-bold tracking-tight text-foreground">FEMS</span>
+                <span className="block text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                  Fire Safety
+                </span>
+              </div>
             </div>
+            <NotificationBell />
           </div>
 
           {/* Nav links */}
@@ -122,13 +126,16 @@ export function DashboardShell({ user, children }: { user: CurrentUser; children
               </span>
               <span className="text-sm font-bold tracking-tight text-foreground">FEMS</span>
             </span>
-            <button
-              onClick={logout}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
-              aria-label="Sign out"
-            >
-              <SignOut className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <NotificationBell />
+              <button
+                onClick={logout}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+                aria-label="Sign out"
+              >
+                <SignOut className="h-4 w-4" />
+              </button>
+            </div>
           </header>
 
           {/* Mobile nav strip */}

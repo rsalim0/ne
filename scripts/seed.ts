@@ -28,7 +28,7 @@ async function main() {
   ]
   await db
     .insert(users)
-    .values(seedUsers.map((u) => ({ ...u, passwordHash })))
+    .values(seedUsers.map((u) => ({ ...u, passwordHash, emailVerifiedAt: new Date() })))
     .onConflictDoNothing({ target: users.email })
 
   const allUsers = await db.select().from(users)

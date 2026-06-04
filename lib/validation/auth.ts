@@ -8,6 +8,10 @@ const passwordSchema = z
 
 const emailSchema = z.email({ error: 'Invalid email address' }).max(255).trim().toLowerCase()
 const nameSchema = z.string().min(1, 'Required').max(100).trim()
+const otpCodeSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{6}$/, 'Enter the 6-digit code')
 
 export const registerSchema = z.object({
   firstName: nameSchema,
@@ -23,8 +27,16 @@ export const loginSchema = z.object({
 
 export const forgotPasswordSchema = z.object({ email: emailSchema })
 
+export const verifyEmailSchema = z.object({
+  email: emailSchema,
+  code: otpCodeSchema,
+})
+
+export const resendOtpSchema = z.object({ email: emailSchema })
+
 export const resetPasswordSchema = z.object({
-  token: z.string().min(1, 'Token is required'),
+  email: emailSchema,
+  code: otpCodeSchema,
   password: passwordSchema,
 })
 
@@ -33,6 +45,6 @@ export const changePasswordSchema = z.object({
   newPassword: passwordSchema,
 })
 
-export { passwordSchema, emailSchema }
+export { passwordSchema, emailSchema, otpCodeSchema }
 export type RegisterInput = z.infer<typeof registerSchema>
 export type LoginInput = z.infer<typeof loginSchema>

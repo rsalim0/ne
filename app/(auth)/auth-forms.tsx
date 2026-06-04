@@ -148,6 +148,12 @@ export function SignInForm() {
       router.push('/dashboard')
       router.refresh()
     } catch (err) {
+      // Unverified accounts: route to the confirmation screen (a fresh code was
+      // just emailed by the API).
+      if (err instanceof ApiError && err.code === 'EMAIL_NOT_VERIFIED') {
+        router.push(`/verify-email?email=${encodeURIComponent(parsed.data.email)}`)
+        return
+      }
       setFormError(err instanceof ApiError ? err.message : 'Sign in failed')
       setLoading(false)
     }
@@ -193,6 +199,13 @@ export function SignInForm() {
         <Button type="submit" size="lg" loading={loading} className="mt-1 w-full">
           Sign in
         </Button>
+
+        <p className="text-center text-sm text-muted-foreground">
+          Don&apos;t have an account?{' '}
+          <Link href="/register" className="font-medium text-primary hover:underline">
+            Create one
+          </Link>
+        </p>
       </form>
     </AuthShell>
   )
@@ -252,12 +265,8 @@ export function SignUpForm() {
     setLoading(true)
     try {
       await api.post('/api/v1/auth/register', parsed.data)
-      await api.post('/api/v1/auth/login', {
-        email: parsed.data!.email,
-        password: parsed.data!.password,
-      })
-      router.push('/dashboard')
-      router.refresh()
+      // Account starts unverified — send the user to confirm the emailed code.
+      router.push(`/verify-email?email=${encodeURIComponent(parsed.data!.email)}`)
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : 'Registration failed')
       setLoading(false)
@@ -357,6 +366,13 @@ export function SignUpForm() {
         <Button type="submit" size="lg" loading={loading} className="mt-1 w-full">
           Create account
         </Button>
+
+        <p className="text-center text-sm text-muted-foreground">
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-primary hover:underline">
+            Sign in
+          </Link>
+        </p>
 
         <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
           <CheckCircle weight="fill" className="h-3.5 w-3.5 text-emerald-500" />

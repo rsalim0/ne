@@ -1,28 +1,28 @@
 import { type NextRequest } from 'next/server'
 import { withApi, readJson } from '@/lib/http/handler'
 import { ok } from '@/lib/http/responses'
-import { forgotPasswordSchema } from '@/lib/validation/auth'
+import { resendOtpSchema } from '@/lib/validation/auth'
 import { findUserByEmail } from '@/lib/services/users'
 import { issueOtp } from '@/lib/services/email-otp'
-import { sendPasswordResetOtp } from '@/lib/email'
+import { sendVerificationOtp } from '@/lib/email'
 import { isProd } from '@/lib/config'
 
 export const POST = withApi(async (req: NextRequest) => {
-  const { email } = forgotPasswordSchema.parse(await readJson(req))
+  const { email } = resendOtpSchema.parse(await readJson(req))
 
   let devOtp: string | undefined
   const user = await findUserByEmail(email)
-  if (user) {
-    const code = await issueOtp(user.id, 'password_reset')
+  // Only (re)send for an existing, still-unverified account.
+  if (user && !user.emailVerifiedAt) {
+    const code = await issueOtp(user.id, 'verify_email')
     devOtp = code
-    await sendPasswordResetOtp(user.email, code)
+    await sendVerificationOtp(user.email, code)
   }
 
-  // Identical response regardless of account existence (no email enumeration).
+  // Identical response regardless of account state (no enumeration).
   const data: Record<string, unknown> = {
-    message: 'If an account exists for that email, a reset code has been sent.',
+    message: 'If that account still needs confirmation, a new code has been sent.',
   }
-  // Dev convenience so the flow is testable without an email provider.
   if (!isProd() && devOtp) data.devOtp = devOtp
   return ok(data)
 })

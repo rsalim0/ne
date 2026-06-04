@@ -1,10 +1,12 @@
 import { after, type NextRequest } from 'next/server'
 import { withApi, readJson, getClientIp } from '@/lib/http/handler'
 import { ok } from '@/lib/http/responses'
-import { UnauthorizedError } from '@/lib/http/errors'
+import { UnauthorizedError, EmailNotVerifiedError } from '@/lib/http/errors'
 import { loginSchema } from '@/lib/validation/auth'
 import { findUserByEmail, toSafeUser } from '@/lib/services/users'
 import { verifyPassword } from '@/lib/auth/password'
+import { issueOtp } from '@/lib/services/email-otp'
+import { sendVerificationOtp } from '@/lib/email'
 import { createSession, setAuthCookie } from '@/lib/auth/session'
 import { writeAuditLog } from '@/lib/audit'
 
@@ -15,6 +17,16 @@ export const POST = withApi(async (req: NextRequest) => {
   // Same error whether the user exists or the password is wrong (no enumeration).
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     throw new UnauthorizedError('Invalid email or password')
+  }
+
+  // Block unverified accounts; re-send a fresh confirmation code so the user
+  // can complete verification from the prompt.
+  if (!user.emailVerifiedAt) {
+    after(async () => {
+      const code = await issueOtp(user.id, 'verify_email')
+      await sendVerificationOtp(user.email, code)
+    })
+    throw new EmailNotVerifiedError()
   }
 
   const { token, expiresAt } = await createSession(user.id, user.role, {

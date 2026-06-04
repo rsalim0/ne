@@ -51,6 +51,24 @@
         { "name": "Me", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/auth/me" } } },
         { "name": "Logout", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/auth/logout" } } },
         {
+          "name": "Verify email (confirm account)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/verify-email" },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"jane@example.com\",\n  \"code\": \"123456\"\n}" }
+          }
+        },
+        {
+          "name": "Resend confirmation code",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/resend-otp" },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"jane@example.com\"\n}" }
+          }
+        },
+        {
           "name": "Forgot password",
           "request": {
             "method": "POST",
@@ -65,7 +83,7 @@
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/v1/auth/reset-password" },
-            "body": { "mode": "raw", "raw": "{\n  \"token\": \"PASTE_RESET_TOKEN\",\n  \"password\": \"NewPassword123\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@fems.local\",\n  \"code\": \"123456\",\n  \"password\": \"NewPassword123\"\n}" }
           }
         }
       ]

@@ -47,6 +47,11 @@ export async function setUserPassword(id: string, passwordHash: string): Promise
   await db.update(users).set({ passwordHash }).where(eq(users.id, id))
 }
 
+/** Mark a user's email as confirmed (idempotent). */
+export async function markEmailVerified(id: string): Promise<void> {
+  await db.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, id))
+}
+
 const SORTABLE = {
   createdAt: users.createdAt,
   firstName: users.firstName,
