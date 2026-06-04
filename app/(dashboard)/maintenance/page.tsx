@@ -307,7 +307,7 @@ function MaintenanceDialog({
                 <Select
                   items={extItems}
                   value={form.extinguisherId}
-                  onValueChange={(v) => set('extinguisherId', v)}
+                  onValueChange={(v) => set('extinguisherId', v ?? '')}
                 >
                   <SelectTrigger className="w-full" aria-invalid={!!fieldErrors.extinguisherId}>
                     <SelectValue placeholder="Select extinguisher..." />

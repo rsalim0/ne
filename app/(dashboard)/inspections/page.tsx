@@ -138,7 +138,7 @@ export default function InspectionsPage() {
           <Select
             items={[{ value: '', label: 'All' }, ...STATUS_ITEMS]}
             value={statusFilter}
-            onValueChange={(v) => { setStatusFilter(v); setPage(1) }}
+            onValueChange={(v) => { setStatusFilter(v ?? ''); setPage(1) }}
           >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="All" />
@@ -208,7 +208,7 @@ export default function InspectionsPage() {
                         <Select
                           items={STATUS_ITEMS}
                           value={r.status}
-                          onValueChange={(v) => setRowStatus(r.id, v)}
+                          onValueChange={(v) => setRowStatus(r.id, v ?? '')}
                         >
                           <SelectTrigger className="w-36 text-xs">
                             <SelectValue />
@@ -380,7 +380,7 @@ function InspectionDialog({
                 <Select
                   items={extItems}
                   value={form.extinguisherId}
-                  onValueChange={(v) => set('extinguisherId', v)}
+                  onValueChange={(v) => set('extinguisherId', v ?? '')}
                 >
                   <SelectTrigger className="w-full" aria-invalid={!!fieldErrors.extinguisherId}>
                     <SelectValue placeholder="Select extinguisher..." />
